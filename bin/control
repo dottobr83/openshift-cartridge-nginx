@@ -24,18 +24,21 @@ function isrunning() {
 }
 
 function hasconfig() {
-    if [ -f "${NGINX_CONFIG_FILE}" ] && [ -f "${NGINX_HTTP_CONFIG_FILE}" ]; then
-        return 1
+    if [ ! -f "${NGINX_CONFIG_FILE}" ]; then
+        echo "Missing conf/nginx.conf in cartridge."
+        return 0
+    fi
+    if [ -f "${NGINX_HTTP_CONFIG_FILE}" ]; then
+        echo "Missing .openshift/nginx.conf.erb in repo."
+        return 0
     fi
 
-    return 0
+    return 1
 }
 
 function _nginx_start() {
     if hasconfig; then
         ${NGINX_EXEC} -c ${NGINX_CONFIG_FILE} -p ${OPENSHIFT_NGINX_DIR}
-    else
-        echo "Missing .openshift/nginx.conf.erb in repo."
     fi
 }
 
@@ -79,7 +82,7 @@ function _nginx_update_conf() {
 }
 
 function start() {
-    if [ isrunning ]; then
+    if isrunning; then
         _nginx_stop
     fi
 

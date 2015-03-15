@@ -23,8 +23,16 @@ function isrunning() {
     return 1
 }
 
-function _nginx_start() {
+function hasconfig() {
     if [ -f "${NGINX_CONFIG_FILE}" ] && [ -f "${NGINX_HTTP_CONFIG_FILE}" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+function _nginx_start() {
+    if hasconfig; then
         ${NGINX_EXEC} -c ${NGINX_CONFIG_FILE} -p ${OPENSHIFT_NGINX_DIR}
     else
         echo "Missing .openshift/nginx.conf.erb in repo."
@@ -107,9 +115,9 @@ function status() {
 function reload() {
     if ! isrunning; then
        _start_nginx
-    else
+    elif hasconfig; then
        echo "`date`: Reloading Nginx " 1>&2
-        ${OPENSHIFT_RUNTIME_DIR}/nginx/sbin/nginx -c ${NGINX_CONFIG_FILE} -s reload
+        ${NGINX_EXEC} -c ${NGINX_CONFIG_FILE} -s reload
     fi
 
     isrunning  &&  echo "Reloaded Nginx instance"
